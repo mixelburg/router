@@ -18,7 +18,7 @@ function getSafeSessionStorage() {
   try {
     // Accessing sessionStorage itself can throw SecurityError in locked-down
     // contexts, e.g. sandboxed/opaque origins or blocked storage policies.
-    return sessionStorage
+    return typeof window !== 'undefined' ? window.sessionStorage : undefined
   } catch {
     return
   }
@@ -194,7 +194,7 @@ export function setupScrollRestoration(router: AnyRouter, force?: boolean) {
     trackedScrollEntries.set(target, entry)
   }
 
-  history.scrollRestoration = 'manual'
+  window.history.scrollRestoration = 'manual'
 
   const onScroll = (event: Event) => {
     if (ignoreScroll || !router.isScrollRestoring) {
@@ -202,7 +202,7 @@ export function setupScrollRestoration(router: AnyRouter, force?: boolean) {
     }
 
     if (event.target === document) {
-      setTrackedScrollEntry(windowScrollTarget, scrollX, scrollY)
+      setTrackedScrollEntry(windowScrollTarget, window.scrollX, window.scrollY)
     } else {
       const target = event.target as Element
       setTrackedScrollEntry(target, target.scrollLeft, target.scrollTop)
@@ -234,7 +234,7 @@ export function setupScrollRestoration(router: AnyRouter, force?: boolean) {
     }
     trackedScrollEntries.clear()
   })
-  addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', () => {
     snapshotCurrentScrollTargets(
       getKey(
         router.stores.resolvedLocation.get() ?? router.stores.location.get(),
@@ -330,7 +330,7 @@ export function setupScrollRestoration(router: AnyRouter, force?: boolean) {
                 continue
               }
 
-              scrollTo({
+              window.scrollTo({
                 top: scrollY,
                 left: scrollX,
                 behavior,
@@ -353,7 +353,7 @@ export function setupScrollRestoration(router: AnyRouter, force?: boolean) {
             behavior,
           }
 
-          scrollTo(scrollOptions)
+          window.scrollTo(scrollOptions)
           if (scrollToTopSelectors) {
             scrollToTopElements ??= getScrollToTopElements(scrollToTopSelectors)
             for (const element of scrollToTopElements) {
