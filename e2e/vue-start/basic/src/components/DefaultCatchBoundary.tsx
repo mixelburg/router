@@ -19,7 +19,7 @@ export const DefaultCatchBoundary = defineComponent({
     const router = useRouter()
     const isRoot = useMatch({
       strict: false,
-      select: (state) => state.id === rootRouteId,
+      select: (state) => state.routeId === rootRouteId,
     })
 
     console.error(props.error)
