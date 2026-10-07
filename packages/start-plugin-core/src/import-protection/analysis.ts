@@ -21,7 +21,6 @@ function mayContainImportOrExport(code: string): boolean {
 }
 
 export type ImportAnalysis = {
-  ast: ParseAstResult
   lineIndex: LineIndex
   importSourcesInOrder: Array<string>
   importSpecifierLocationIndex: Map<string, number>
@@ -50,19 +49,20 @@ function makeTransientResult(
   return result
 }
 
-function getOrParseAst(result: TransformResult): ParseAstResult {
-  if (result.parsedAst) {
-    result.perf?.count('analysis.parseAst.cached')
-    return result.parsedAst
-  }
-
+/**
+ * Parse the module's current code.
+ *
+ * The AST is intentionally not memoized on the transform result: those results
+ * live in the adapter's per-environment module cache for the whole dev session,
+ * so keeping an AST per analysed module makes memory proportional to the size of
+ * every module the app imports. Callers hold the AST only for the call.
+ */
+function parseImportAst(result: TransformResult): ParseAstResult {
   const startedAt = result.perf ? performance.now() : 0
   result.perf?.count('analysis.parseAst.calls')
 
   try {
-    const ast = parseAst({ code: result.code, filename: result.filename })
-    result.parsedAst = ast
-    return ast
+    return parseAst({ code: result.code, filename: result.filename })
   } finally {
     if (result.perf) {
       result.perf.time('analysis.parseAst', startedAt)
@@ -165,7 +165,7 @@ export function isValidExportName(name: string): boolean {
 }
 
 function buildImportAnalysis(result: TransformResult): ImportAnalysis {
-  const ast = getOrParseAst(result)
+  const ast = parseImportAst(result)
 
   const importSourcesInOrder: Array<string> = []
   const importSpecifierLocationIndex = new Map<string, number>()
@@ -334,7 +334,6 @@ function buildImportAnalysis(result: TransformResult): ImportAnalysis {
   result.lineIndex = lineIndex
 
   const analysis = {
-    ast,
     lineIndex,
     importSourcesInOrder,
     importSpecifierLocationIndex,
@@ -890,7 +889,7 @@ function findUsagePosInAnalysis(
     }
   }
 
-  visit(analysis.ast.program, {
+  visit(parseImportAst(result).program, {
     parents: [],
     scopeStack: [],
   })

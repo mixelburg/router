@@ -3,6 +3,7 @@ import {
   findOriginalUnsafeUsagePos,
   findOriginalUnsafeUsagePosFromResult,
   findPostCompileUsagePos,
+  getOrCreateImportAnalysis,
 } from '../../src/import-protection/analysis'
 
 function pos(code: string, source: string) {
@@ -363,4 +364,17 @@ test('repeated lookups on one transform result return the cached position', () =
   expect(
     findOriginalUnsafeUsagePosFromResult(result, 'denied', 'client'),
   ).toEqual(position)
+})
+
+// Transform results stay in the adapter's module cache for the whole dev
+// session, so an AST kept on either the result or its analysis makes memory
+// scale with the size of every module the app imports.
+test('neither the transform result nor its analysis keeps the AST', () => {
+  const code = `import { denied } from 'denied';\ndenied()`
+  const result = { code, map: undefined, originalCode: undefined }
+
+  getOrCreateImportAnalysis(result)
+
+  expect(result).not.toHaveProperty('parsedAst')
+  expect(getOrCreateImportAnalysis(result)).not.toHaveProperty('ast')
 })

@@ -9,7 +9,6 @@ import {
 import { getOrCreate, normalizeFilePath } from './utils'
 import type { ImportAnalysis } from './analysis'
 import type { Loc } from './trace'
-import type { ParseAstResult } from '@tanstack/router-utils'
 import type { RawSourceMap } from 'source-map'
 
 // Source-map type compatible with both Rollup's SourceMap and source-map's
@@ -42,7 +41,6 @@ export interface TransformResult {
   originalResult?: TransformResult
   /** Precomputed line index for `code` (index → line/col). */
   lineIndex?: LineIndex
-  parsedAst?: ParseAstResult
   analysis?: ImportAnalysis
   perf?: ImportProtectionPerfRecorder
 }

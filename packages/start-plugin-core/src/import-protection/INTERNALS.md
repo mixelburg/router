@@ -7,7 +7,8 @@ Start import protection.
 
 Its current structure is:
 
-- parse module code once per `TransformResult`
+- parse module code to build an analysis for a `TransformResult`, and again
+  only when a violation needs a usage position
 - derive a read-only `ImportAnalysis` object from that AST
 - reuse that analysis for source extraction, import-specifier locations, mock
   export discovery, named export discovery, and usage lookup
@@ -27,7 +28,6 @@ It builds and caches `ImportAnalysis` on `TransformResult.analysis`.
 
 `ImportAnalysis` contains:
 
-- parsed AST
 - line index
 - import sources in source order
 - import specifier literal locations
@@ -35,6 +35,11 @@ It builds and caches `ImportAnalysis` on `TransformResult.analysis`.
 - mock export names by source
 - named exports
 - usage-position cache
+
+The AST itself is deliberately not part of the analysis: transform results stay
+in the adapter's per-environment module cache for the whole dev session, so
+retaining one AST per analysed module makes memory scale with the size of every
+module the app imports. Usage lookup re-parses the module's code instead.
 
 It exposes both result-based and code-based helpers:
 
